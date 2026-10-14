@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Route Weather — weather along your drive, when you get there</title>
+<meta name="description" content="See the weather along your driving route at the time you'll actually reach each point.">
+<meta name="theme-color" content="#0b1020">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%235b8cff'/><path d='M14 44c10-4 14-20 36-24' stroke='white' stroke-width='5' fill='none' stroke-linecap='round'/></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="map" aria-label="Route map"></div>
+<header class="glass top">
+  <div class="brand"><span class="logo"></span>Route&nbsp;Weather</div>
+  <button id="theme" class="icon-btn" aria-label="Toggle theme">◐</button>
+</header>
+<form id="form" class="glass panel" autocomplete="off">
+  <div class="field"><span class="dot a"></span><input id="from" placeholder="Start — e.g. San Jose, CA" required><ul class="sugg"></ul></div>
+  <button type="button" id="swap" class="swap" aria-label="Swap">⇅</button>
+  <div class="field"><span class="dot b"></span><input id="to" placeholder="Destination — e.g. Los Angeles, CA" required><ul class="sugg"></ul></div>
+  <div class="row">
+    <label class="when">Depart <input id="depart" type="datetime-local"></label>
+    <button id="go" class="go">Get forecast</button>
+  </div>
+</form>
+<div class="controls glass">
+  <button id="radarBtn" class="chip" aria-pressed="false">Radar</button>
+  <div class="seg" role="group"><button class="chip on" data-mode="cond">Conditions</button><button class="chip" data-mode="temp">Temp</button></div>
+  <button id="share" class="chip">Share</button>
+</div>
+<section id="sheet" class="sheet glass" hidden>
+  <div class="grab"></div>
+  <div id="summary" class="summary"></div>
+  <div id="warnings"></div>
+  <div id="legend" class="legend"></div>
+  <div id="timeline" class="timeline" aria-label="Timeline along route"></div>
+  <aside class="ad-slot" aria-label="Sponsored">
+    <span>Sponsored</span><p>Partner slot — gas, hotels or EV charging along your route.</p>
+  </aside>
+  <footer class="attrib">Routing © <a href="https://project-osrm.org/">OSRM</a> demo · Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Weather <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0) · Geocoding Open-Meteo / <a href="https://nominatim.org/">Nominatim</a> · Radar <a href="https://www.rainviewer.com/">RainViewer</a> · Forecasts are estimates — drive safely.</footer>
+</section>
+<div id="toast" class="toast" role="status"></div>
+<div id="loader" class="loader" hidden><div class="spin"></div><span id="loadmsg">Planning…</span></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body></html>

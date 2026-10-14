@@ -1,0 +1,145 @@
+'use strict';
+const $=s=>document.querySelector(s);
+const state={from:null,to:null,mode:'cond',radar:null,data:null};
+// ---------- icons (original inline SVG, gradient-filled) ----------
+const G=`<defs><linearGradient id="gs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8fafc"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#64748b"/></linearGradient></defs>`;
+const sun=(x=32,y=32,r=10)=>`<g stroke="#fbbf24" stroke-width="3" stroke-linecap="round">${[0,45,90,135,180,225,270,315].map(a=>{const c=Math.cos(a*Math.PI/180),s=Math.sin(a*Math.PI/180);return`<line x1="${x+c*(r+5)}" y1="${y+s*(r+5)}" x2="${x+c*(r+9)}" y2="${y+s*(r+9)}"/>`}).join('')}</g><circle cx="${x}" cy="${y}" r="${r}" fill="url(#gs)"/>`;
+const moon=(x=30,y=28)=>`<path d="M${x+8} ${y-12}a13 13 0 1 0 10 18a10 10 0 0 1-10-18z" fill="#c7d2fe"/>`;
+const cloud=(f='url(#gc)',dy=0)=>`<path transform="translate(0 ${dy})" d="M20 46h26a10 10 0 0 0 0-20a14 14 0 0 0-27-2a9 9 0 0 0 1 22z" fill="${f}"/>`;
+const drops=c=>[18,28,38].map((x,i)=>`<line x1="${x+4}" y1="${50+i%2*2}" x2="${x}" y2="${58+i%2*2}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`).join('');
+const flakes=()=>[20,32,44].map((x,i)=>`<circle cx="${x}" cy="${54+i%2*4}" r="2.6" fill="#e0f2fe"/>`).join('');
+function icon(code,day=true){let b;
+ if(code<=1)b=day?sun():moon();
+ else if(code==2)b=(day?sun(24,22,8):moon(18,18))+cloud();
+ else if(code==3)b=cloud('url(#gd)',-6)+cloud();
+ else if(code==45||code==48)b=cloud('url(#gd)',-6)+[44,51,58].map(y=>`<line x1="14" y1="${y}" x2="50" y2="${y}" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>`).join('');
+ else if((code>=71&&code<=77)||code==85||code==86)b=cloud('url(#gc)',-6)+flakes();
+ else if(code>=95)b=cloud('url(#gd)',-6)+`<path d="M34 40l-8 12h7l-4 10l11-14h-7l4-8z" fill="#facc15"/>`;
+ else b=cloud(code>=63||code==65||code==82?'url(#gd)':'url(#gc)',-6)+drops(code==66||code==67||code==56||code==57?'#a5f3fc':'#60a5fa');
+ return `<svg viewBox="0 0 64 64" class="ic">${G}${b}</svg>`;}
+const WMO={0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',56:'Freezing drizzle',57:'Freezing drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Showers',81:'Showers',82:'Violent showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Storm + hail',99:'Storm + hail'};
+// ---------- color scales ----------
+function condColor(w){const c=w.code;
+ if(c>=95)return'#c084fc';if((c>=71&&c<=77)||c==85||c==86)return'#e0f2fe';if([56,57,66,67].includes(c))return'#22d3ee';
+ if(c>=51||w.pp>=60)return c>=63&&c!=80?'#2563eb':'#60a5fa';if(c==45||c==48)return'#94a3b8';if(c==3)return'#a1a1aa';return'#fbbf24';}
+const TS=[[-20,'#7c3aed'],[0,'#3b82f6'],[8,'#06b6d4'],[15,'#22c55e'],[22,'#eab308'],[29,'#f97316'],[36,'#ef4444'],[45,'#9f1239']];
+function lerp(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16));const A=p(a),B=p(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+function tempColor(t){if(t<=TS[0][0])return TS[0][1];for(let i=1;i<TS.length;i++)if(t<=TS[i][0])return lerp(TS[i-1][1],TS[i][1],(t-TS[i-1][0])/(TS[i][0]-TS[i-1][0]));return TS.at(-1)[1]}
+// ---------- units ----------
+const imperial=/^en-(US|LR|MM)$/.test(navigator.language)||Intl.DateTimeFormat().resolvedOptions().timeZone.startsWith('America/');
+const fT=c=>imperial?Math.round(c*9/5+32)+'°':Math.round(c)+'°';
+const fW=k=>imperial?Math.round(k/1.609)+' mph':Math.round(k)+' km/h';
+const fD=m=>imperial?Math.round(m/1609)+' mi':Math.round(m/1000)+' km';
+const fDur=s=>{const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h?`${h} h ${m} min`:`${m} min`};
+const fTime=(ms,tz)=>new Date(ms).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',timeZone:tz});
+const fDay=(ms,tz)=>new Date(ms).toLocaleDateString([], {weekday:'short',timeZone:tz});
+// ---------- map ----------
+const map=L.map('map',{zoomControl:false,zoomSnap:0.25,attributionControl:true,preferCanvas:false}).setView([39,-98],4);
+let base;function setBase(){if(base)map.removeLayer(base);const dark=!document.documentElement.classList.contains('light');
+ base=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:dark?'tiles-dark':'tiles-light',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);base.bringToBack();}
+const savedTheme=localStorage.getItem('rw-theme');if(savedTheme==='light'||(!savedTheme&&matchMedia('(prefers-color-scheme: light)').matches))document.documentElement.classList.add('light');
+setBase();
+$('#theme').onclick=()=>{document.documentElement.classList.toggle('light');localStorage.setItem('rw-theme',document.documentElement.classList.contains('light')?'light':'dark');setBase()};
+const routeLayer=L.layerGroup().addTo(map),pinLayer=L.layerGroup().addTo(map);
+// ---------- ui helpers ----------
+function toast(m,ms=3500){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),ms)}
+function loading(m){$('#loader').hidden=!m;if(m)$('#loadmsg').textContent=m}
+async function getJSON(url,opt={},tries=2){for(let i=0;i<tries;i++){try{const ctl=new AbortController();const h=setTimeout(()=>ctl.abort(),15000);const r=await fetch(url,{...opt,signal:ctl.signal});clearTimeout(h);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}catch(e){if(i==tries-1)throw e;await new Promise(r=>setTimeout(r,800))}}}
+// ---------- geocoding ----------
+const label=r=>[r.name,r.admin1,r.country_code].filter(Boolean).join(', ');
+async function omGeo(q,n=5){const name=q.split(',')[0].trim();const hint=q.split(',').slice(1).join(' ').trim().toLowerCase();
+ const j=await getJSON(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=${hint?20:n}&language=en&format=json`);let r=j.results||[];
+ if(hint){const ab={al:'alabama',ak:'alaska',az:'arizona',ar:'arkansas',ca:'california',co:'colorado',ct:'connecticut',de:'delaware',fl:'florida',ga:'georgia',hi:'hawaii',id:'idaho',il:'illinois',in:'indiana',ia:'iowa',ks:'kansas',ky:'kentucky',la:'louisiana',me:'maine',md:'maryland',ma:'massachusetts',mi:'michigan',mn:'minnesota',ms:'mississippi',mo:'missouri',mt:'montana',ne:'nebraska',nv:'nevada',nh:'new hampshire',nj:'new jersey',nm:'new mexico',ny:'new york',nc:'north carolina',nd:'north dakota',oh:'ohio',ok:'oklahoma',or:'oregon',pa:'pennsylvania',ri:'rhode island',sc:'south carolina',sd:'south dakota',tn:'tennessee',tx:'texas',ut:'utah',vt:'vermont',va:'virginia',wa:'washington',wv:'west virginia',wi:'wisconsin',wy:'wyoming',dc:'district of columbia'};
+  const h=ab[hint]||hint;const f=r.filter(x=>[x.admin1,x.country,x.country_code].some(v=>v&&v.toLowerCase().includes(h)));if(f.length)r=f}
+ return r.slice(0,n).map(x=>({lat:x.latitude,lon:x.longitude,name:label(x),short:x.name}))}
+async function nominatim(q){const j=await getJSON(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`,{headers:{'Accept-Language':'en'}});
+ return j[0]?{lat:+j[0].lat,lon:+j[0].lon,name:j[0].display_name.split(',').slice(0,3).join(','),short:j[0].name||q.split(',')[0]}:null}
+async function resolve(q){const m=q.match(/^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*$/);if(m)return{lat:+m[1],lon:+m[3],name:q,short:q};
+ let r=(await omGeo(q,1).catch(()=>[]))[0];if(!r)r=await nominatim(q).catch(()=>null);return r}
+function setupSuggest(id){const inp=$('#'+id),ul=inp.parentNode.querySelector('.sugg');let t,items=[],act=-1;
+ inp.addEventListener('input',()=>{state[id]=null;clearTimeout(t);const q=inp.value.trim();if(q.length<3){ul.classList.remove('show');return}
+  t=setTimeout(async()=>{items=await omGeo(q).catch(()=>[]);act=-1;ul.innerHTML=items.map((x,i)=>`<li data-i="${i}">${x.short} <small>${x.name.slice(x.short.length+2)}</small></li>`).join('');ul.classList.toggle('show',items.length>0)},350)});
+ ul.addEventListener('mousedown',e=>{const li=e.target.closest('li');if(!li)return;e.preventDefault();pick(items[li.dataset.i])});
+ function pick(x){state[id]=x;inp.value=x.name;ul.classList.remove('show')}
+ inp.addEventListener('keydown',e=>{if(!ul.classList.contains('show'))return;if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();act=(act+(e.key=='ArrowDown'?1:-1)+items.length)%items.length;[...ul.children].forEach((li,i)=>li.classList.toggle('act',i==act))}else if(e.key=='Enter'&&act>=0){e.preventDefault();pick(items[act])}else if(e.key=='Escape')ul.classList.remove('show')});
+ inp.addEventListener('blur',()=>setTimeout(()=>ul.classList.remove('show'),150))}
+setupSuggest('from');setupSuggest('to');
+$('#swap').onclick=()=>{[$('#from').value,$('#to').value]=[$('#to').value,$('#from').value];[state.from,state.to]=[state.to,state.from]};
+// ---------- routing ----------
+async function route(a,b){const u=`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson&annotations=duration,distance&steps=true`;
+ const j=await getJSON(u,{},3);if(j.code!=='Ok'||!j.routes?.length)throw new Error(j.message||'No route found');return j.routes[0]}
+function hav(a,b){const R=6371e3,r=Math.PI/180,dl=(b[1]-a[1])*r,dn=(b[0]-a[0])*r;const x=Math.sin(dl/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+function buildTrack(rt){const c=rt.geometry.coordinates;const dur=rt.legs.flatMap(l=>l.annotation?.duration||[]);const T=[0],D=[0];
+ for(let i=1;i<c.length;i++){D.push(D[i-1]+hav(c[i-1],c[i]));T.push(T[i-1]+(dur[i-1]??hav(c[i-1],c[i])/25))}
+ // road names along route
+ const roads=[];let d=0;for(const s of rt.legs[0].steps){roads.push({d,name:s.ref||s.name||''});d+=s.distance}
+ return{c,T,D,roads}}
+function sample(tr,total){const n=Math.min(48,Math.max(8,Math.round(total/1200)));const idx=[];
+ for(let k=0;k<=n;k++){const tt=tr.T.at(-1)*k/n;let i=tr.T.findIndex(v=>v>=tt);if(i<0)i=tr.T.length-1;idx.push(i)}return[...new Set(idx)]}
+// ---------- weather ----------
+async function weather(pts){const lat=pts.map(p=>p[1].toFixed(3)).join(','),lon=pts.map(p=>p[0].toFixed(3)).join(',');
+ const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,visibility,snowfall,is_day&timeformat=unixtime&forecast_days=16&timezone=auto`;
+ const j=await getJSON(u,{},3);return Array.isArray(j)?j:[j]}
+function at(w,ms){const h=w.hourly,t=ms/1000;let i=0,best=1e18;for(let k=0;k<h.time.length;k++){const d=Math.abs(h.time[k]-t);if(d<best){best=d;i=k}}
+ return{temp:h.temperature_2m[i],pp:h.precipitation_probability[i]??0,pr:h.precipitation[i]??0,code:h.weather_code[i],wind:h.wind_speed_10m[i],gust:h.wind_gusts_10m[i],vis:h.visibility?.[i],snow:h.snowfall?.[i]??0,day:h.is_day?.[i]!==0,tz:w.timezone,off:best>5400}}
+function hazards(w){const z=[];
+ if(w.code>=95)z.push('Thunderstorms');if([56,57,66,67].includes(w.code))z.push('Freezing rain/ice');
+ if(w.snow>=0.5||[73,75,86].includes(w.code))z.push('Snow');if(w.code==65||w.code==82||w.pr>=7)z.push('Heavy rain');
+ if(w.gust>=60)z.push('Strong gusts '+fW(w.gust));if(w.vis!=null&&w.vis<1000)z.push('Low visibility');
+ if(w.temp<=0&&w.pr>0)z.push('Icy roads possible');if(w.temp>=40)z.push('Extreme heat');return z}
+// ---------- render ----------
+function render(){const {tr,pts,wx,rt,depart}=state.data;routeLayer.clearLayers();pinLayer.clearLayers();
+ const col=w=>state.mode=='temp'?tempColor(w.temp):condColor(w);
+ const all=tr.c.map(p=>[p[1],p[0]]);
+ L.polyline(all,{color:'#000',weight:11,opacity:.35,lineCap:'round'}).addTo(routeLayer);
+ for(let k=0;k<pts.length-1;k++){const a=pts[k].i,b=pts[k+1].i;L.polyline(all.slice(a,b+1),{color:col(wx[k]),weight:6,opacity:1,lineCap:'round',lineJoin:'round',className:'seg-line'}).addTo(routeLayer)}
+ const step=Math.max(1,Math.round(pts.length/(innerWidth<600?6:10)));
+ pts.forEach((p,k)=>{if(k%step||k==0||k>pts.length-1-step/2)return;const w=wx[k];
+  L.marker(all[p.i],{icon:L.divIcon({className:'',iconSize:[0,0],html:`<div class="wx-pin" style="transform:translate(-50%,-50%)"><div class="b">${icon(w.code,w.day)}${fT(w.temp)}</div></div>`})}).on('click',()=>focusCard(k)).addTo(pinLayer)});
+ [[all[0],'#34d399'],[all.at(-1),'#f472b6']].forEach(([ll,c])=>L.marker(ll,{icon:L.divIcon({className:'',iconSize:[16,16],html:`<div class="end-pin" style="background:${c}"></div>`})}).addTo(pinLayer));
+ // sheet
+ const arr=depart+rt.duration*1000,tz=wx.at(-1).tz,tz0=wx[0].tz;
+ $('#summary').innerHTML=`<span class="big">${fDur(rt.duration)}</span><span class="mut">${fD(rt.distance)} · ${fDay(depart,tz0)} ${fTime(depart,tz0)} → ${fDay(arr,tz)} ${fTime(arr,tz)}</span>`;
+ const bad=[];pts.forEach((p,k)=>{const h=hazards(wx[k]);if(h.length)bad.push({k,h})});
+ const kinds=[...new Set(bad.flatMap(b=>b.h.map(x=>x.replace(/ \d.*$/,''))))];
+ const maxPP=Math.max(...wx.map(w=>w.pp)),tmin=Math.min(...wx.map(w=>w.temp)),tmax=Math.max(...wx.map(w=>w.temp));
+ $('#warnings').innerHTML=(bad.length?`<div class="warn">⚠️<div><b>${kinds.join(' · ')}</b><br>Expected near ${[...new Set(bad.map(b=>pts[b.k].place))].slice(0,3).join(', ')} around ${fTime(pts[bad[0].k].ms,wx[bad[0].k].tz)}. Consider adjusting departure.</div></div>`
+  :`<div class="warn ok">✅<div><b>No severe weather expected</b><br>${fT(tmin)}–${fT(tmax)} · max rain chance ${maxPP}%</div></div>`)+(wx.some(w=>w.off)?`<div class="warn">ℹ️<div>Part of this trip is beyond the 16-day forecast window; nearest available hour shown.</div></div>`:'');
+ $('#legend').innerHTML=state.mode=='temp'?`<div class="bar" style="background:linear-gradient(90deg,${TS.map(s=>s[1]).join(',')})"></div><div style="display:flex;justify-content:space-between;width:100%"><span>${fT(-20)}</span><span>${fT(15)}</span><span>${fT(45)}</span></div>`
+  :[['#fbbf24','Clear'],['#a1a1aa','Cloudy'],['#94a3b8','Fog'],['#60a5fa','Rain'],['#2563eb','Heavy rain'],['#e0f2fe','Snow'],['#22d3ee','Ice'],['#c084fc','Storm']].map(([c,n])=>`<span><i style="background:${c}"></i>${n}</span>`).join('');
+ const cs=Math.max(1,Math.round(pts.length/14));
+ $('#timeline').innerHTML=pts.map((p,k)=>{if(k%cs&&k!=pts.length-1)return'';const w=wx[k];const h=hazards(w);
+  return`<div class="card ${h.length?'bad':''}" data-k="${k}" style="--c:${col(w)}"><div><div class="t">${fTime(p.ms,w.tz)}</div><div class="p" title="${p.place}">${p.place}</div></div>${icon(w.code,w.day)}<div><div class="tmp">${fT(w.temp)}</div><div class="p">${WMO[w.code]||''}</div></div><div class="m"><span>💧${w.pp}%</span><span>💨${fW(w.wind)}</span></div></div>`}).join('');
+ document.querySelectorAll('.card').forEach(c=>c.onclick=()=>{const k=+c.dataset.k;map.flyTo(all[pts[k].i],9,{duration:.8});selCard(k)});
+ $('#sheet').hidden=false}
+function selCard(k){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',+c.dataset.k==k))}
+function focusCard(k){const cards=[...document.querySelectorAll('.card')];let best=cards[0];for(const c of cards)if(+c.dataset.k<=k)best=c;best?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});selCard(+best.dataset.k)}
+// ---------- main ----------
+async function run(push=true){const fq=$('#from').value.trim(),tq=$('#to').value.trim();if(!fq||!tq)return;
+ const dv=$('#depart').value;const depart=dv?new Date(dv).getTime():Date.now();
+ try{loading('Finding places…');const [a,b]=await Promise.all([state.from||resolve(fq),state.to||resolve(tq)]);
+  if(!a)throw new Error(`Couldn't find “${fq}”`);if(!b)throw new Error(`Couldn't find “${tq}”`);state.from=a;state.to=b;
+  loading('Planning route…');const rt=await route(a,b).catch(e=>{throw new Error('Routing service unavailable or no road route ('+e.message+'). Try again in a moment.')});
+  const tr=buildTrack(rt);const ids=sample(tr,rt.duration);
+  const pts=ids.map((i,k)=>{const rd=[...tr.roads].reverse().find(r=>r.d<=tr.D[i]&&r.name)?.name||'';return{i,ms:depart+tr.T[i]*1000,place:k==0?a.short:k==ids.length-1?b.short:`${fD(tr.D[i])}${rd?' · '+rd:''}`}});
+  loading('Fetching forecast…');const raw=await weather(ids.map(i=>tr.c[i]));const wx=pts.map((p,k)=>at(raw[k],p.ms));
+  state.data={tr,pts,wx,rt,depart};render();
+  map.fitBounds(L.polyline(tr.c.map(p=>[p[1],p[0]])).getBounds(),fitPad());
+  document.body.classList.add('collapsed');$('#mini').textContent=`${a.short} → ${b.short} · ${fDur(rt.duration)}`;
+  if(push){const p=new URLSearchParams({from:fq,to:tq});if(dv)p.set('depart',dv);history.replaceState(null,'','?'+p)}
+  document.title=`${a.short} → ${b.short} · Route Weather`;
+ }catch(e){console.warn(e);toast(e.message||'Something went wrong')}finally{loading(false)}}
+function fitPad(){return innerWidth>=900?{paddingTopLeft:[430,40],paddingBottomRight:[40,40]}:{paddingTopLeft:[30,130],paddingBottomRight:[30,innerHeight*0.52+60]}}
+$('#form').onsubmit=e=>{e.preventDefault();run()};
+const mini=document.createElement('div');mini.id='mini';mini.className='mini glass';document.body.appendChild(mini);mini.onclick=()=>document.body.classList.remove('collapsed');
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on',x==b));if(state.data)render()});
+$('#share').onclick=async()=>{const url=location.href;try{if(navigator.share)await navigator.share({title:document.title,url});else{await navigator.clipboard.writeText(url);toast('Link copied')}}catch{}};
+// ---------- radar ----------
+$('#radarBtn').onclick=async()=>{const btn=$('#radarBtn');if(state.radar){map.removeLayer(state.radar);state.radar=null;btn.setAttribute('aria-pressed','false');return}
+ try{const j=await getJSON('https://api.rainviewer.com/public/weather-maps.json');const f=j.radar.past.at(-1);
+  state.radar=L.tileLayer(`${j.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.7,maxNativeZoom:7,maxZoom:19,attribution:'Radar © <a href="https://www.rainviewer.com/">RainViewer</a>'}).addTo(map);
+  btn.setAttribute('aria-pressed','true');toast('Live radar · '+new Date(f.time*1000).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}catch{toast('Radar unavailable right now')}};
+// ---------- init from URL ----------
+const q=new URLSearchParams(location.search);
+if(q.get('depart'))$('#depart').value=q.get('depart');
+if(q.get('from')&&q.get('to')){$('#from').value=q.get('from');$('#to').value=q.get('to');run(false)}
