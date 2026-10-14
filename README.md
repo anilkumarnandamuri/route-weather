@@ -4,7 +4,7 @@ Static web app. Enter a start and a destination (departure time is optional) and
 
 - Run locally: `python3 -m http.server 8000` → http://localhost:8000
 - Deploy: push this folder to a GitHub Pages repo (no build step).
-- Shareable links: `?from=San%20Jose,%20CA&to=Los%20Angeles,%20CA&depart=2026-10-14T08:00`
+- Shareable links: `?from=San%20Jose,%20CA&to=Los%20Angeles,%20CA&mode=now|depart|arrive&t=2026-10-15T09:00` (`t` = local ISO time; `mode=arrive` computes departure = t − drive time and shows "Leave by"). Legacy `?depart=` still works.
 - Screenshot test: `python3 shoot.py` (needs Playwright + a server; edit the port inside).
 
 ## Data sources (free, no keys) — please respect their terms

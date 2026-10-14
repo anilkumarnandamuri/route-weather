@@ -58,7 +58,7 @@ async function resolve(q){const m=q.match(/^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d
  let r=(await omGeo(q,1).catch(()=>[]))[0];if(!r)r=await nominatim(q).catch(()=>null);return r}
 function setupSuggest(id){const inp=$('#'+id),ul=inp.parentNode.querySelector('.sugg');let t,items=[],act=-1;
  inp.addEventListener('input',()=>{state[id]=null;clearTimeout(t);const q=inp.value.trim();if(q.length<3){ul.classList.remove('show');return}
-  t=setTimeout(async()=>{items=await omGeo(q).catch(()=>[]);act=-1;ul.innerHTML=items.map((x,i)=>`<li data-i="${i}">${x.short} <small>${x.name.slice(x.short.length+2)}</small></li>`).join('');ul.classList.toggle('show',items.length>0)},350)});
+  t=setTimeout(async()=>{items=await omGeo(q).catch(()=>[]);act=-1;ul.innerHTML=items.map((x,i)=>`<li data-i="${i}">${x.short} <small>${x.name.slice(x.short.length+2)}</small></li>`).join('');ul.classList.toggle('show',items.length>0&&document.activeElement===inp)},350)});
  ul.addEventListener('mousedown',e=>{const li=e.target.closest('li');if(!li)return;e.preventDefault();pick(items[li.dataset.i])});
  function pick(x){state[id]=x;inp.value=x.name;ul.classList.remove('show')}
  inp.addEventListener('keydown',e=>{if(!ul.classList.contains('show'))return;if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();act=(act+(e.key=='ArrowDown'?1:-1)+items.length)%items.length;[...ul.children].forEach((li,i)=>li.classList.toggle('act',i==act))}else if(e.key=='Enter'&&act>=0){e.preventDefault();pick(items[act])}else if(e.key=='Escape')ul.classList.remove('show')});
@@ -88,7 +88,7 @@ function hazards(w){const z=[];
  if(w.gust>=60)z.push('Strong gusts '+fW(w.gust));if(w.vis!=null&&w.vis<1000)z.push('Low visibility');
  if(w.temp<=0&&w.pr>0)z.push('Icy roads possible');if(w.temp>=40)z.push('Extreme heat');return z}
 // ---------- render ----------
-function render(){const {tr,pts,wx,rt,depart}=state.data;routeLayer.clearLayers();pinLayer.clearLayers();
+function render(){const {tr,pts,wx,rt,depart,mode}=state.data;routeLayer.clearLayers();pinLayer.clearLayers();
  const col=w=>state.mode=='temp'?tempColor(w.temp):condColor(w);
  const all=tr.c.map(p=>[p[1],p[0]]);
  L.polyline(all,{color:'#000',weight:11,opacity:.35,lineCap:'round'}).addTo(routeLayer);
@@ -99,7 +99,7 @@ function render(){const {tr,pts,wx,rt,depart}=state.data;routeLayer.clearLayers(
  [[all[0],'#34d399'],[all.at(-1),'#f472b6']].forEach(([ll,c])=>L.marker(ll,{icon:L.divIcon({className:'',iconSize:[16,16],html:`<div class="end-pin" style="background:${c}"></div>`})}).addTo(pinLayer));
  // sheet
  const arr=depart+rt.duration*1000,tz=wx.at(-1).tz,tz0=wx[0].tz;
- $('#summary').innerHTML=`<span class="big">${fDur(rt.duration)}</span><span class="mut">${fD(rt.distance)} · ${fDay(depart,tz0)} ${fTime(depart,tz0)} → ${fDay(arr,tz)} ${fTime(arr,tz)}</span>`;
+ $('#summary').innerHTML=`<span class="big">${fDur(rt.duration)}</span><span class="mut">${fD(rt.distance)} · ${fDay(depart,tz0)} ${fTime(depart,tz0)} → ${fDay(arr,tz)} ${fTime(arr,tz)}</span>`+(mode=='arrive'?`<div class="leave">🕑 Leave by ${fDay(depart,tz0)} ${fTime(depart,tz0)}</div>`:'');
  const bad=[];pts.forEach((p,k)=>{const h=hazards(wx[k]);if(h.length)bad.push({k,h})});
  const kinds=[...new Set(bad.flatMap(b=>b.h.map(x=>x.replace(/ \d.*$/,''))))];
  const maxPP=Math.max(...wx.map(w=>w.pp)),tmin=Math.min(...wx.map(w=>w.temp)),tmax=Math.max(...wx.map(w=>w.temp));
@@ -114,19 +114,42 @@ function render(){const {tr,pts,wx,rt,depart}=state.data;routeLayer.clearLayers(
  $('#sheet').hidden=false}
 function selCard(k){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',+c.dataset.k==k))}
 function focusCard(k){const cards=[...document.querySelectorAll('.card')];let best=cards[0];for(const c of cards)if(+c.dataset.k<=k)best=c;best?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});selCard(+best.dataset.k)}
+
+// ---------- time selector ----------
+const T={mode:'now',when:null};
+const pad=n=>String(n).padStart(2,'0');
+const isoLocal=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function roundUp(d,m=15){d=new Date(d);d.setSeconds(0,0);d.setMinutes(Math.ceil(d.getMinutes()/m)*m);return d}
+function drawDays(){const base=new Date();base.setHours(0,0,0,0);let html='';
+ for(let i=0;i<7;i++){const d=new Date(base);d.setDate(d.getDate()+i);const lab=i==0?'Today':i==1?'Tomorrow':d.toLocaleDateString([], {weekday:'short'});
+  const on=T.when&&T.when.toDateString()==d.toDateString();html+=`<button type="button" class="day ${on?'on':''}" data-d="${i}">${lab}<small>${d.toLocaleDateString([], {month:'short',day:'numeric'})}</small></button>`}
+ html+=`<button type="button" class="day" data-d="pick">📅<small>More</small></button>`;$('#days').innerHTML=html}
+function syncPicker(){if(!T.when)T.when=roundUp(Date.now()+(T.mode=='arrive'?3*3600e3:0));
+ $('#ptime').value=`${pad(T.when.getHours())}:${pad(T.when.getMinutes())}`;
+ $('#pdate').textContent=T.when.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});drawDays()}
+function setMode(m){T.mode=m;const i=['now','depart','arrive'].indexOf(m);
+ document.querySelectorAll('[data-tm]').forEach(b=>b.setAttribute('aria-checked',b.dataset.tm==m));
+ $('.tsel-pill').style.transform=`translateX(${i*100}%)`;$('#picker').classList.toggle('open',m!='now');if(m!='now')syncPicker()}
+document.querySelectorAll('[data-tm]').forEach(b=>b.onclick=()=>setMode(b.dataset.tm));
+$('#days').onclick=e=>{const b=e.target.closest('.day');if(!b)return;if(b.dataset.d=='pick'){const p=$('#pday');p.value=isoLocal(T.when).slice(0,10);p.showPicker?p.showPicker():p.click();return}
+ const d=new Date();d.setDate(d.getDate()+ +b.dataset.d);T.when.setFullYear(d.getFullYear(),d.getMonth(),d.getDate());syncPicker()};
+$('#pday').onchange=e=>{const [y,m,d]=e.target.value.split('-').map(Number);if(y){T.when.setFullYear(y,m-1,d);syncPicker()}};
+$('#ptime').onchange=e=>{const [h,m]=e.target.value.split(':').map(Number);if(!isNaN(h)){T.when.setHours(h,m,0,0);syncPicker()}};
+document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{T.when=new Date(T.when.getTime()+ +b.dataset.step*60e3);syncPicker()});
 // ---------- main ----------
 async function run(push=true){const fq=$('#from').value.trim(),tq=$('#to').value.trim();if(!fq||!tq)return;
- const dv=$('#depart').value;const depart=dv?new Date(dv).getTime():Date.now();
+ const mode=T.mode,target=mode=='now'?Date.now():T.when.getTime();
  try{loading('Finding places…');const [a,b]=await Promise.all([state.from||resolve(fq),state.to||resolve(tq)]);
   if(!a)throw new Error(`Couldn't find “${fq}”`);if(!b)throw new Error(`Couldn't find “${tq}”`);state.from=a;state.to=b;
   loading('Planning route…');const rt=await route(a,b).catch(e=>{throw new Error('Routing service unavailable or no road route ('+e.message+'). Try again in a moment.')});
+  const depart=mode=='arrive'?target-rt.duration*1000:target;if(mode=='arrive'&&depart<Date.now()-6e4)toast('To arrive by then you would have needed to leave earlier, so the forecast is for that past departure.',5000);
   const tr=buildTrack(rt);const ids=sample(tr,rt.duration);
   const pts=ids.map((i,k)=>{const rd=[...tr.roads].reverse().find(r=>r.d<=tr.D[i]&&r.name)?.name||'';return{i,ms:depart+tr.T[i]*1000,place:k==0?a.short:k==ids.length-1?b.short:`${fD(tr.D[i])}${rd?' · '+rd:''}`}});
   loading('Fetching forecast…');const raw=await weather(ids.map(i=>tr.c[i]));const wx=pts.map((p,k)=>at(raw[k],p.ms));
-  state.data={tr,pts,wx,rt,depart};render();
+  state.data={tr,pts,wx,rt,depart,mode};render();
   map.fitBounds(L.polyline(tr.c.map(p=>[p[1],p[0]])).getBounds(),fitPad());
   document.body.classList.add('collapsed');$('#mini').textContent=`${a.short} → ${b.short} · ${fDur(rt.duration)}`;
-  if(push){const p=new URLSearchParams({from:fq,to:tq});if(dv)p.set('depart',dv);history.replaceState(null,'','?'+p)}
+  if(push){const p=new URLSearchParams({from:fq,to:tq});if(mode!='now'){p.set('mode',mode);p.set('t',isoLocal(T.when))}history.replaceState(null,'','?'+p)}
   document.title=`${a.short} → ${b.short} · Route Weather`;
  }catch(e){console.warn(e);toast(e.message||'Something went wrong')}finally{loading(false)}}
 function fitPad(){return innerWidth>=900?{paddingTopLeft:[430,40],paddingBottomRight:[40,40]}:{paddingTopLeft:[30,130],paddingBottomRight:[30,innerHeight*0.52+60]}}
@@ -141,5 +164,5 @@ $('#radarBtn').onclick=async()=>{const btn=$('#radarBtn');if(state.radar){map.re
   btn.setAttribute('aria-pressed','true');toast('Live radar · '+new Date(f.time*1000).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}catch{toast('Radar unavailable right now')}};
 // ---------- init from URL ----------
 const q=new URLSearchParams(location.search);
-if(q.get('depart'))$('#depart').value=q.get('depart');
+{let m=q.get('mode'),t=q.get('t')||q.get('depart');if(!m&&t)m='depart';if((m=='depart'||m=='arrive')&&t&&!isNaN(new Date(t))){T.when=new Date(t);setMode(m)}}
 if(q.get('from')&&q.get('to')){$('#from').value=q.get('from');$('#to').value=q.get('to');run(false)}

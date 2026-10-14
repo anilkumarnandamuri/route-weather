@@ -17,10 +17,22 @@
   <div class="field"><span class="dot a"></span><input id="from" placeholder="Start — e.g. San Jose, CA" required><ul class="sugg"></ul></div>
   <button type="button" id="swap" class="swap" aria-label="Swap">⇅</button>
   <div class="field"><span class="dot b"></span><input id="to" placeholder="Destination — e.g. Los Angeles, CA" required><ul class="sugg"></ul></div>
-  <div class="row">
-    <label class="when">Depart <input id="depart" type="datetime-local"></label>
-    <button id="go" class="go">Get forecast</button>
+  <div class="tsel" role="radiogroup" aria-label="When">
+    <span class="tsel-pill"></span>
+    <button type="button" role="radio" data-tm="now" aria-checked="true">Leave now</button>
+    <button type="button" role="radio" data-tm="depart" aria-checked="false">Depart at</button>
+    <button type="button" role="radio" data-tm="arrive" aria-checked="false">Arrive by</button>
   </div>
+  <div class="picker" id="picker">
+    <div class="days" id="days"></div>
+    <div class="trow">
+      <button type="button" class="step" data-step="-15" aria-label="15 minutes earlier">−</button>
+      <label class="tbox"><input id="ptime" type="time" step="300" aria-label="Time"><span id="pdate" class="pdate"></span></label>
+      <button type="button" class="step" data-step="15" aria-label="15 minutes later">+</button>
+    </div>
+    <input id="pday" type="date" class="sr" aria-label="Pick a date">
+  </div>
+  <button id="go" class="go">Get forecast</button>
 </form>
 <div class="controls glass">
   <button id="radarBtn" class="chip" aria-pressed="false">Radar</button>
