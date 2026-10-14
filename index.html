@@ -11,9 +11,14 @@
 <div id="map" aria-label="Route map"></div>
 <header class="glass top">
   <div class="brand"><span class="logo"></span>Route&nbsp;Weather</div>
-  <button id="theme" class="icon-btn" aria-label="Toggle theme">◐</button>
+  <div class="top-actions"><button id="panelToggle" class="icon-btn desk" aria-label="Hide panel" aria-expanded="true" aria-controls="panel">⟨</button><button id="theme" class="icon-btn" aria-label="Toggle theme">◐</button></div>
 </header>
-<form id="form" class="glass panel" autocomplete="off">
+<aside id="panel" class="bsheet glass" data-snap="half" aria-label="Route planner">
+ <div id="handle" class="handle" role="button" tabindex="0" aria-label="Resize panel. Currently half height. Press to change." ><span class="grab"></span></div>
+ <div id="peek" class="peek"><div class="peek-idle"><b>Plan a drive</b><span>Weather along your route, at the time you get there</span></div></div>
+ <div id="scroller" class="scroller">
+ <button type="button" id="routeRow" class="route-row" hidden aria-expanded="false" aria-controls="form"><span class="rr-txt"></span><span class="rr-edit">Edit</span></button>
+<form id="form" class="panel" autocomplete="off">
   <div class="field"><span class="dot a"></span><input id="from" placeholder="Start — e.g. San Jose, CA" required><ul class="sugg"></ul></div>
   <button type="button" id="swap" class="swap" aria-label="Swap">⇅</button>
   <div class="field"><span class="dot b"></span><input id="to" placeholder="Destination — e.g. Los Angeles, CA" required><ul class="sugg"></ul></div>
@@ -34,13 +39,7 @@
   </div>
   <button id="go" class="go">Get forecast</button>
 </form>
-<div class="controls glass">
-  <button id="radarBtn" class="chip" aria-pressed="false">Radar</button>
-  <div class="seg" role="group"><button class="chip on" data-mode="cond">Conditions</button><button class="chip" data-mode="temp">Temp</button></div>
-  <button id="share" class="chip">Share</button>
-</div>
-<section id="sheet" class="sheet glass" hidden>
-  <div class="grab"></div>
+<section id="sheet" class="results" hidden>
   <div id="summary" class="summary"></div>
   <div id="warnings"></div>
   <div id="legend" class="legend"></div>
@@ -50,6 +49,14 @@
   </aside>
   <footer class="attrib">Routing © <a href="https://project-osrm.org/">OSRM</a> demo · Map © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Weather <a href="https://open-meteo.com/">Open-Meteo.com</a> (CC BY 4.0) · Geocoding Open-Meteo / <a href="https://nominatim.org/">Nominatim</a> · Radar <a href="https://www.rainviewer.com/">RainViewer</a> · Forecasts are estimates — drive safely.</footer>
 </section>
+ </div>
+ <div id="resizer" class="resizer desk" role="separator" aria-orientation="vertical" aria-label="Resize side panel" tabindex="0"></div>
+</aside>
+<div class="controls glass">
+  <button id="radarBtn" class="chip" aria-pressed="false">Radar</button>
+  <div class="seg" role="group"><button class="chip on" data-mode="cond">Conditions</button><button class="chip" data-mode="temp">Temp</button></div>
+  <button id="share" class="chip">Share</button>
+</div>
 <div id="toast" class="toast" role="status"></div>
 <div id="loader" class="loader" hidden><div class="spin"></div><span id="loadmsg">Planning…</span></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
