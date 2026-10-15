@@ -1,10 +1,10 @@
 # HANDOFF — route-weather
 
 ## Updated
-2026-10-15 13:41 PT | Grok Bot (agent-handoff setup) | branch `docs/agent-handoff-20261015` | last commit eac2653
+2026-10-15 16:48 PDT | agy/gemini-3.8-flash-high | branch `job/RW-1` | last commit aa95c53
 
 ## Current task / claim
-None. Next unclaimed: **RW-1**.
+**RW-1** Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only. — status **claimed** by agy/gemini-3.8-flash-high on `job/RW-1` (since 2026-10-15 16:48 PDT). Last note: 2026-10-15 16:48 PDT claimed by agy/gemini-3.8-flash-high
 
 ## Done this session
 - Added AGENTS.md, PLAN.md, HANDOFF.md, DECISIONS.md and .cursor/rules/agents.mdc from README, file tree and git log.
