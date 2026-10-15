@@ -19,9 +19,9 @@
  <div id="scroller" class="scroller">
  <button type="button" id="routeRow" class="route-row" hidden aria-expanded="false" aria-controls="form"><span class="rr-txt"></span><span class="rr-edit">Edit</span></button>
 <form id="form" class="panel" autocomplete="off">
-  <div class="field"><span class="dot a"></span><input id="from" placeholder="Start — e.g. San Jose, CA" required><ul class="sugg"></ul></div>
+  <div class="field"><span class="dot a"></span><input aria-label="Start" id="from" placeholder="Start — e.g. San Jose, CA" required><ul class="sugg"></ul></div>
   <button type="button" id="swap" class="swap" aria-label="Swap">⇅</button>
-  <div class="field"><span class="dot b"></span><input id="to" placeholder="Destination — e.g. Los Angeles, CA" required><ul class="sugg"></ul></div>
+  <div class="field"><span class="dot b"></span><input aria-label="Destination" id="to" placeholder="Destination — e.g. Los Angeles, CA" required><ul class="sugg"></ul></div>
   <div class="tsel" role="radiogroup" aria-label="When">
     <span class="tsel-pill"></span>
     <button type="button" role="radio" data-tm="now" aria-checked="true">Leave now</button>
@@ -39,10 +39,26 @@
   </div>
   <button id="go" class="go">Get forecast</button>
 </form>
+<details id="tripLibrary" class="trip-library">
+  <summary>Saved trips &amp; recent searches</summary>
+  <button type="button" id="saveTrip" class="chip" disabled>Save this trip</button>
+  <h2>Saved trips <span id="savedCount"></span></h2>
+  <div id="savedTrips"></div>
+  <h2>Recent searches</h2>
+  <div id="recentTrips"></div>
+  <p class="library-note">Stored on this browser. Re-run to get a fresh forecast.</p>
+</details>
 <section id="sheet" class="results" hidden>
   <div id="summary" class="summary"></div>
   <div id="warnings"></div>
   <div id="legend" class="legend"></div>
+  <div class="scrubber">
+    <label for="scrub">Weather along your drive</label>
+    <div class="scrub-times"><span id="scrubStart"></span><span id="scrubEnd"></span></div>
+    <input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Position from departure to arrival" aria-describedby="scrubInfo">
+    <output id="scrubInfo" for="scrub"></output>
+    <p class="scrub-note">Conditions use the nearest route forecast sample.</p>
+  </div>
   <div id="timeline" class="timeline" aria-label="Timeline along route"></div>
   <aside class="ad-slot" aria-label="Sponsored">
     <span>Sponsored</span><p>Partner slot — gas, hotels or EV charging along your route.</p>
@@ -60,5 +76,8 @@
 <div id="toast" class="toast" role="status"></div>
 <div id="loader" class="loader" hidden><div class="spin"></div><span id="loadmsg">Planning…</span></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="core.js"></script>
+<script src="sheet.js"></script>
+<script src="library.js"></script>
 <script src="app.js"></script>
 </body></html>
