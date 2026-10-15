@@ -1,10 +1,10 @@
 # RW-1: RW-1 (see PLAN.md RW-1 scope note and HANDOFF.md): this branch job/RW-1 = laptop
 
-Status: in-progress
+Status: built
 Branch: job/RW-1 (base: codex/weather-20261014)
 Model: agy/gemini-3.8-flash-high | Playbook: Bug fix | Cost: cheap
 Created: 2026-10-15 16:48 PDT
-Test command:
+Test command: python3 -m pytest tests/test_rw1_browser.py -q && node --test tests/*.test.js
 
 ## Task
 RW-1 (see PLAN.md RW-1 scope note and HANDOFF.md): this branch job/RW-1 = laptop branch codex/weather-20261014 (b50c8d0) + the agent docs. Codex reviewed b50c8d0 vs main and found two [P2] regressions (full text copied into artifacts/RW-1/laptop-codex-review.txt; do not read anything under /workspace/projects/reviews). Fix both at the root, minimally:
@@ -16,13 +16,21 @@ Test command for the task file: python3 -m pytest tests/test_rw1_browser.py -q &
 Do not change unrelated behavior, do not add network calls, no package installs. Record the choice in DECISIONS.md and update HANDOFF.md.
 
 ## Acceptance (definition of done, see .cursor/rules/done.mdc)
-- [ ] Checkpoint below filled and Status updated
-- [ ] Playwright browser test passes via the Test command
-- [ ] New screenshot in artifacts/RW-1/
+- [x] Checkpoint below filled and Status updated
+- [x] Playwright browser test passes via the Test command
+- [x] New screenshot in artifacts/RW-1/
 - [ ] Codex review (artifacts/RW-1/review.md) has no [P0]-[P2] items
 
 ## Checkpoint
-_(agent fills: what changed, files, verification evidence, open items)_
+- What changed:
+  - Fixed desktop scrubber regression: updated `app.js` `selectElapsed` to accept `fromScrub` parameter so desktop (`innerWidth >= 900`) skips `scrollIntoView()` on scrub input while maintaining mobile horizontal timeline centering and desktop card click/focus reveals.
+  - Fixed timeline touch action: scoped `touch-action: pan-x pinch-zoom` for `.timeline` to `@media (max-width:899px)` in `style.css` and set `touch-action: auto` on desktop (`@media (min-width:900px)`), allowing vertical touch scrolling over the vertical cards list.
+  - Added unit test in `tests/app.test.js` checking that desktop scrubber input skips `scrollIntoView()` while card clicks invoke `scrollIntoView()` and mobile scrubber centers horizontally.
+  - Added deterministic offline Playwright browser test in `tests/test_rw1_browser.py` asserting desktop scrubber visibility after keyboard interaction, card selection change, and timeline touch-action at 1280px vs 390px.
+  - Captured screenshots `artifacts/RW-1/rw1-desktop-1280-scrubbed.png` and `artifacts/RW-1/rw1-mobile-390.png`.
+- Files: `app.js`, `style.css`, `tests/app.test.js`, `tests/test_rw1_browser.py`, `tests/support/leaflet.js`, `tests/support/leaflet.css`, `DECISIONS.md`, `HANDOFF.md`, `tasks/RW-1.md`.
+- Verification evidence: `python3 -m pytest tests/test_rw1_browser.py -q && node --test tests/*.test.js` exits 0 (2 browser tests passed in ~1.6s, 28 node tests passed).
+- Open items: Awaiting external Codex review.
 
 ## Log
 - 2026-10-15 16:48 PDT run-job started

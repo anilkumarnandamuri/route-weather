@@ -1,35 +1,41 @@
 # HANDOFF — route-weather
 
 ## Updated
-2026-10-15 16:49 PDT | agy/gemini-3.8-flash-high | branch `job/RW-1` | last commit 2351036
+2026-10-15 16:56 PDT | agy/gemini-3.8-flash-high | branch `job/RW-1` | last commit 06471b2
 
 ## Current task / claim
-**RW-1** Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only. — status **claimed** by agy/gemini-3.8-flash-high on `job/RW-1` (since 2026-10-15 16:48 PDT). Last note: 2026-10-15 16:49 PDT resumed by agy/gemini-3.8-flash-high
+**RW-1** Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only. — status **in-review** by agy/gemini-3.8-flash-high on `job/RW-1` (since 2026-10-15 16:48 PDT). Last note: Fixed desktop scrubber scroll and timeline touch regressions; browser and node tests pass Next: Codex review of RW-1
 
 ## Done this session
-- Added AGENTS.md, PLAN.md, HANDOFF.md, DECISIONS.md and .cursor/rules/agents.mdc from README, file tree and git log.
+- Fixed [P2] desktop scrubber scroll: in `app.js`, `fromScrub` flag prevents calling `scrollIntoView()` on desktop during scrubber input, while preserving mobile horizontal timeline centering and desktop card click / focusCard reveals.
+- Fixed [P2] desktop timeline touch: in `style.css`, scoped `.timeline` `touch-action: pan-x pinch-zoom` to mobile (`@media (max-width:899px)`) and set `touch-action: auto` on desktop (`@media (min-width:900px)`).
+- Added Node tests in `tests/app.test.js` verifying desktop scrubber skips scrollIntoView, card clicks reveal, and mobile scrubber horizontally centers timeline.
+- Added offline Playwright browser test `tests/test_rw1_browser.py` with mock routes, forecasts, and tile responses; verified desktop scrubber bounding box in viewport/scroller rect, selection change, and timeline touch-action at 1280px vs 390px.
+- Captured screenshots in `artifacts/RW-1/`: `rw1-desktop-1280-scrubbed.png` and `rw1-mobile-390.png`.
+- Documented choice in `DECISIONS.md` under `D002`.
+- Updated `tasks/RW-1.md` with Status: built, Test command, and completed Checkpoint.
 
 ## Verified (with evidence)
-- Screenshots of time-selector and sheet flows exist untracked in shots/ (2026-10-14).
+- `python3 -m pytest tests/test_rw1_browser.py -q && node --test tests/*.test.js` exits 0 (2 Playwright tests pass in ~1.6s; all 28 node tests pass in ~470ms).
+- Screenshots created in `artifacts/RW-1/`: `rw1-desktop-1280-scrubbed.png` (desktop scrubber still visible in panel after scrubbing) and `rw1-mobile-390.png` (mobile sheet open displaying timeline).
 
 ## Unverified
-- Whether laptop branch b50c8d0 already covers RW-3/RW-4 (codex-launch/weather*.md prompts suggest it does).
+- None for RW-1 scope.
 
 ## Broken / half-done
-- Untracked screenshots in shots/ on the box checkout (not committed).
+- None.
 
 ## Next 3 steps (smallest first)
-1. RW-1: Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only.
+1. Codex review of RW-1 (artifacts/RW-1/review.md).
 2. RW-2: Add a Playwright pytest for URL-param parsing/serialization (from/to/mode/t, legacy depart) with screenshots in artifacts/RW-2/; offline-safe (mock network).
-3. RW-3: Harden the mobile bottom-sheet drag (pointer capture, touch-action, velocity snapping, safe-area) — may already be done on the laptop branch; check RW-1 first.
+3. RW-3: Harden the mobile bottom-sheet drag (pointer capture, touch-action, velocity snapping, safe-area).
 
 ## Blockers / questions for Anil
-- Laptop-only branch codex/weather-20261014 b50c8d0 is not on the box.
-- Docs live on branch docs/agent-handoff-20261015; merge into main needs approval.
+- Awaiting Codex review for RW-1 before merge into main by Anil.
 
 ## How to resume
 ```sh
-cd /workspace/route-weather
-python3 -m http.server 8000  # http://localhost:8000
+cd /workspace/repos/.wt/route-weather-rw1
+python3 -m pytest tests/test_rw1_browser.py -q && node --test tests/*.test.js
 /workspace/projects/board.sh status
 ```

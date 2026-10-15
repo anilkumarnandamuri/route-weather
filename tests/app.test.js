@@ -150,3 +150,29 @@ test('pointer focus keeps the scrubber stationary while text and keyboard focus 
   app.read("Sheet.snap('half')");
   panel.fire('focusin',{target:app.document.querySelector('#from')});assert.equal(app.read('Sheet.cur'),'full');
 });
+
+test('desktop scrubber selection skips vertical card scrollIntoView while card clicks still reveal',async()=>{
+  const desk=boot({width:1280});
+  await desk.search();
+  const scrub=desk.document.querySelector('#scrub');
+  const cards=desk.document.querySelectorAll('.card');
+  const lastCard=cards.at(-1);
+
+  scrub.value='1000';
+  scrub.fire('input');
+  assert.equal(lastCard.classList.contains('sel'),true);
+  assert.equal(lastCard.revealed,undefined);
+
+  cards[1].click();
+  assert.equal(cards[1].classList.contains('sel'),true);
+  assert.equal(cards[1].revealed,true);
+
+  const mob=boot({width:390});
+  await mob.search();
+  const mobScrub=mob.document.querySelector('#scrub');
+  const mobTimeline=mob.document.querySelector('#timeline');
+  mobScrub.value='1000';
+  mobScrub.fire('input');
+  assert.notEqual(mobTimeline.scrollLeft,0);
+});
+

@@ -126,7 +126,13 @@
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}}
 
-.timeline,.days{touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain}
+.days{touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain}
+@media(max-width:899px){
+ .timeline{touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain}
+}
+@media(min-width:900px){
+ .timeline{touch-action:auto}
+}
 .scrubber{touch-action:pan-x pinch-zoom}
 .scrubber input{touch-action:none}
 @media(max-width:899px){

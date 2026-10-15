@@ -119,7 +119,7 @@ function render(){const {tr,pts,wx,rt,depart,mode}=state.data;routeLayer.clearLa
  $('#sheet').hidden=false;$('#peek').innerHTML=`<div class="summary">${$('#summary').innerHTML}</div>`;
  selectElapsed(state.elapsed);
 }
-function selectElapsed(elapsed,{reveal=false,pan=false}={}){
+function selectElapsed(elapsed,{reveal=false,pan=false,fromScrub=false}={}){
  if(!state.data)return;
  const {tr,rt,pts,wx,depart}=state.data;
  state.elapsed=RouteCore.clamp(elapsed,0,rt.duration);
@@ -138,12 +138,12 @@ function selectElapsed(elapsed,{reveal=false,pan=false}={}){
  document.querySelectorAll('.card').forEach(c=>{const on=+c.dataset.k===k;c.classList.toggle('sel',on);c.setAttribute('aria-pressed',on);if(on)selected=c});
  if(reveal&&selected){
   if(innerWidth<900){const list=$('#timeline');list.scrollTo({left:selected.offsetLeft-list.offsetLeft-(list.clientWidth-selected.offsetWidth)/2,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
-  else selected.scrollIntoView({behavior:'auto',block:'nearest'});
+  else if(!fromScrub)selected.scrollIntoView({behavior:'auto',block:'nearest'});
  }
  if(pan)map.panTo(ll,{animate:!matchMedia('(prefers-reduced-motion: reduce)').matches});
 }
 function focusCard(k,pan=false){if(state.data)selectElapsed((state.data.pts[k].ms-state.data.depart)/1000,{reveal:true,pan})}
-$('#scrub').addEventListener('input',e=>{if(state.data)selectElapsed(state.data.rt.duration*Number(e.target.value)/1000,{reveal:true})});
+$('#scrub').addEventListener('input',e=>{if(state.data)selectElapsed(state.data.rt.duration*Number(e.target.value)/1000,{reveal:true,fromScrub:true})});
 
 // ---------- time selector ----------
 const T={mode:'now',when:null};
