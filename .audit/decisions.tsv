@@ -1,0 +1,8 @@
+ts	phase	decision	why	evidence	result
+2026-10-15T05:32:39.440726+00:00	design	Keep static browser scripts with one dependency-free core	Preserve static serving and make URL, geometry, and gesture behavior executable in Node	core.js	implemented
+2026-10-15T05:32:39.440755+00:00	url	Keep original query precedence and preserve incoming seconds	Existing URL parsing accepts browser Date strings and serializes local minutes only after a user search	tests/core.test.js;tests/app.test.js	tests green
+2026-10-15T05:32:39.440762+00:00	git	Leave all changes uncommitted after the first failed git add	The user explicitly prohibited workarounds for read-only .git	CHECKPOINT.md	git index.lock write denied
+2026-10-15T05:32:39.440766+00:00	sheet	Own vertical content movement with pointers and preserve native horizontal gestures	Continuous scroll-to-sheet handoff cannot reclaim a browser-owned pointer stream	sheet.js;tests/sheet.test.js	tests green
+2026-10-15T05:32:39.440771+00:00	verification	Use offline application fixtures and report missing browser evidence	Playwright absent; Firefox startup denied by sandbox; shell DNS unavailable	tests/support/app-fixture.js;CHECKPOINT.md	browser verification inconclusive
+2026-10-15T05:32:39.440775+00:00	timeline	Scale track time to route duration and interpolate elapsed selection	Departure and arrival selections must hit the actual route endpoints	app.js;tests/app.test.js	tests green
+2026-10-15T05:32:39.440778+00:00	storage	Save only successful trip inputs and handle denied writes visibly	Re-runs need fresh forecasts; blocked storage must not break route planning	library.js;tests/app.test.js	tests green
