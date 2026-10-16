@@ -1,10 +1,10 @@
 # HANDOFF — route-weather
 
 ## Updated
-2026-10-15 16:57 PDT | agy/gemini-3.8-flash-high | branch `job/RW-1` | last commit 1886bbd
+2026-10-15 17:30 PDT | agy/gemini-3.8-flash-high | branch `job/RW-1` | last commit 2de7215
 
 ## Current task / claim
-**RW-1** Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only. — status **in-review** by agy/gemini-3.8-flash-high on `job/RW-1` (since 2026-10-15 16:48 PDT). Last note: agy/gemini-3.8-flash-high build + Codex review passed done-check Next: Chief of Staff review/merge of job/RW-1
+**RW-1** Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only. — status **done** by agy/gemini-3.8-flash-high on `job/RW-1` (since 2026-10-15 16:48 PDT). Last note: imported laptop branch b50c8d0 + fixed Codex 2x P2; merged job/RW-1 into main (2de7215, approved by Anil 5:25 PM PT); node 28/28 + offline Playwright 2/2 pass; pushed Next: RW-2 (RW-3/RW-4 may already be covered by the laptop branch; check first)
 
 ## Done this session
 - Fixed [P2] desktop scrubber scroll: in `app.js`, `fromScrub` flag prevents calling `scrollIntoView()` on desktop during scrubber input, while preserving mobile horizontal timeline centering and desktop card click / focusCard reveals.
