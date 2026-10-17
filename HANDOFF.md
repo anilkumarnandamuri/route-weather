@@ -1,10 +1,10 @@
 # HANDOFF — route-weather
 
 ## Updated
-2026-10-17 10:53 PDT | codex/gpt-6.1-sol | branch `job/RW-2` | last commit dc93c71
+2026-10-17 11:18 PDT | codex/gpt-6.1-sol | branch `job/RW-2` | last commit b9f21b2
 
 ## Current task / claim
-**RW-2** Add a Playwright pytest for URL-param parsing/serialization (from/to/mode/t, legacy depart) with screenshots in artifacts/RW-2/; offline-safe (mock network). — status **in-review** by codex/gpt-6.1-sol on `job/RW-2` (since 2026-10-17 10:40 PDT). Last note: codex gpt-6.1-sol build + review clean; 30 Playwright + 28 node pass; screenshots in artifacts/RW-2/ Next: Chief of Staff review/merge of job/RW-2
+**RW-2** Add a Playwright pytest for URL-param parsing/serialization (from/to/mode/t, legacy depart) with screenshots in artifacts/RW-2/; offline-safe (mock network). — status **done** by codex/gpt-6.1-sol on `job/RW-2` (since 2026-10-17 10:40 PDT). Last note: merged+pushed to route-weather main b9f21b2 (Anil approved 11:11 PT) Next: -
 
 ## Done this session
 - Read AGENTS.md, previous HANDOFF, PLAN, task brief, DECISIONS, core URL helpers, app integration, and RW-1 browser tests.
