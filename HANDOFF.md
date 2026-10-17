@@ -1,10 +1,10 @@
 # HANDOFF — route-weather
 
 ## Updated
-2026-10-15 17:30 PDT | agy/gemini-3.8-flash-high | branch `job/RW-1` | last commit 2de7215
+2026-10-17 10:40 PDT | codex/gpt-6.1-sol | branch `job/RW-2` | last commit ff33f25
 
 ## Current task / claim
-**RW-1** Import laptop branch codex/weather-20261014 (b50c8d0) onto the box before new feature work — Anil/Chief of Staff only. — status **done** by agy/gemini-3.8-flash-high on `job/RW-1` (since 2026-10-15 16:48 PDT). Last note: imported laptop branch b50c8d0 + fixed Codex 2x P2; merged job/RW-1 into main (2de7215, approved by Anil 5:25 PM PT); node 28/28 + offline Playwright 2/2 pass; pushed Next: RW-2 (RW-3/RW-4 may already be covered by the laptop branch; check first)
+**RW-2** Add a Playwright pytest for URL-param parsing/serialization (from/to/mode/t, legacy depart) with screenshots in artifacts/RW-2/; offline-safe (mock network). — status **claimed** by codex/gpt-6.1-sol on `job/RW-2` (since 2026-10-17 10:40 PDT). Last note: 2026-10-17 10:40 PDT claimed by codex/gpt-6.1-sol
 
 ## Done this session
 - Fixed [P2] desktop scrubber scroll: in `app.js`, `fromScrub` flag prevents calling `scrollIntoView()` on desktop during scrubber input, while preserving mobile horizontal timeline centering and desktop card click / focusCard reveals.
