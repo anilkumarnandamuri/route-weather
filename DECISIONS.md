@@ -10,3 +10,8 @@
 - Why: Fixes the two P2 regressions found in the laptop branch import without modifying layout structures or breaking touch/keyboard interactions.
 - Alternatives rejected: Making the timeline its own nested scroll container on desktop (adds undesirable nested scrollbars); setting `touch-action: pan-y` instead of `auto` (over-constrains gestures on desktop touchscreens).
 
+
+## D003 — Browser URL regression coverage reuses offline fixtures (2026-10-17, codex)
+- Decision: RW-2 imports RW-1's local server fixture and external-request mock, exercises startup and form submissions at both 1280px and 390px, and pins the browser clock and timezone for picker dates. Reload checks cover serialized links, with screenshots after the arrive-mode round trip.
+- Why: Tests cover integration of URL helpers with the real form and history updates while using the existing vendored Leaflet/API mocks without live services. Fixed time keeps Tomorrow and local-time expectations stable.
+- Alternatives rejected: Calling only RouteCore from page.evaluate (duplicates Node coverage and misses UI wiring); copying RW-1's mock implementation (creates two versions to maintain).
